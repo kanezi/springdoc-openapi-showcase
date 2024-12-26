@@ -1,6 +1,12 @@
 = Open API showcase
 :toc:
 
+== Youtube tutorial
+
+Youtube tutorials is available for this repository at:
+
+image::DOCS/images/SpringBootOpenAPI.png[Tutorial,link=https://youtu.be/JvmwNH5DODw]
+
 
 == Intro
 

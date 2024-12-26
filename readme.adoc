@@ -1,0 +1,246 @@
+= Open API showcase
+:toc:
+
+
+== Intro
+
+XML had XSD to validate the structure of the document and ensures XML is containing data in suitable format and structure.
+
+With the industry moving from XML to JSON REST ful API's in mid 2000's there was missing an equivalent validation scheme.
+
+Swagger came out with proposal for solution in 2010, what is today known as OPEN API spec.
+
+
+It had the following properties:
+
+- written in JSON or YML
+- uses a standard format to describe REST API
+- spec should be machine-readable
+- humans should also be able to easily understand it
+
+=== History
+
+2010:: Swagger
+2014:: Open API 2.0
+2017:: Open API 3.0
+2019:: springdoc-openapi - integration between spring and open API
+2021:: Open API 3.1
+
+=== springdoc-openapi
+
+**springdoc-openapi** is java library helps to automate the generation of API documentation using spring boot projects.
+
+General overview of springdoc-openapi structure:
+
+image:DOCS/images/springdoc-openapi.png[springdoc-openapi overview]
+
+
+== Open API versions
+
+We can propagate springdoc version from pom.xml to our application, by first defining version of library in pom.xml.
+We can then reference it in application.properties by __'@springdoc.version@'__, and use __@Value__ annotation in out class to pull version in out application.
+
+pom.xml:: ```<springdoc.version>2.7.0</springdoc.version>```
+application.properties:: ```springdoc.version='@springdoc.version@'```
+OpenApiConfig:: ```Value("${springdoc.version}") String springDocVersion;```
+
+== Defaults
+
+After adding springdoc dependency in pom.xml:
+
+----
+<!-- springdoc ui -->
+<dependency>
+    <groupId>org.springdoc</groupId>
+    <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+    <version>${springdoc.version}</version>
+</dependency>
+----
+
+we'll get **open api spec** on:
+
+link:http://localhost:8080/v3/api-docs[]
+
+and **swagger ui** on:
+
+link:http://localhost:8080/swagger-ui/index.html[]
+
+
+=== Actuator
+
+Actuator (gives info about app) end point is on:
+
+link:http://localhost:8080/actuator[]
+
+Only health end point is visible by default, and we can change that with property:
+
+[source]
+----
+management.endpoints.web.exposure.include=*
+----
+
+=== Customizations
+
+Customize api docs and swagger ui paths:
+
+----
+# Customize the path to api docs
+#springdoc.api-docs.path=/api-docs
+#springdoc.swagger-ui.path=/swagger-ui-custom.html
+
+# Opens swagger ui on base url
+springdoc.swagger-ui.use-root-path=true
+----
+
+
+== Show actuator endpoints in swagger
+
+add application property:
+----
+# shows actuator endpoints
+springdoc.show-actuator=true
+----
+
+Basic Open API @Bean configuration for Group related to actuator
+
+[source,java]
+----
+@Bean
+GroupedOpenApi actuatorApi() {
+    return GroupedOpenApi
+            .builder()
+            .group("actuator")
+            .addOpenApiCustomizer(openApi -> openApi.info(new Info().title("Actuator API").version(springDocVersion)))
+            .pathsToMatch("/actuator/**")
+            .build();
+}
+----
+
+Let's not hardcode the base path of actuator
+
+----
+
+----
+
+[source,java]
+----
+@Bean
+GroupedOpenApi actuatorApi(WebEndpointProperties endpointProperties) {
+    return GroupedOpenApi
+            .builder()
+            .group("actuator")
+            .addOpenApiCustomizer(openApi -> openApi.info(new Info().title("Actuator API").version(springDocVersion)))
+            //.pathsToMatch("/actuator/**")
+            // when base actuator path is changed with property: management.endpoints.web.base-path
+            .pathsToMatch(endpointProperties.getBasePath() + ALL_PATTERN)
+            .build();
+}
+----
+
+image::DOCS/images/swagger_actuator_group.PNG[swagger actuator group]
+
+
+== Open API json
+
+Open API documentation can be generated as part of the build process (```mvn verify```) and imported into postman to create collection.
+
+=== Maven plugin
+
+Open API has maven plugin that, by default generates, __openapi.json__ in the root of build directory __${project.build.directory}__.
+
+Minimal __pom.xml__ build configuration (add the plugin and hook it to pre and post integrate phase of spring boot maven plugin wiht start and stop goals):
+
+----
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                    </excludes>
+<!--                    <jvmArguments>-Dspring.application.admin.enabled=true</jvmArguments>-->
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>start</goal>
+                            <goal>stop</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-maven-plugin</artifactId>
+                <version>1.4</version>
+                <executions>
+                    <execution>
+                        <id>integration-test</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+----
+
+Url, name and location of the file can be modified with configuration:
+
+----
+<plugin>
+    <executions>
+        .........
+    </executions>
+    <configuration>
+        <apiDocsUrl>http://localhost:8080/v3/api-docs</apiDocsUrl>
+        <outputFileName>openapi.json</outputFileName>
+        <outputDir>${project.build.directory}</outputDir>
+    </configuration>
+</plugin>
+----
+
+=== swagger.io
+
+Open API spec can be imported to link:https://swagger.io/resources/open-api/[swagger.io swagger editor] to generate server and client for different programming languages.
+
+image:DOCS/images/swagger-editor.png[swagger editor options]
+
+
+=== Postman import
+
+Open API json (__actuator.json__) can be imported into postman to create collection
+
+image::DOCS/images/postman_import_openapi_json.PNG[postman import open api json]
+
+image::DOCS/images/postman_collection.PNG[postman collection from open api json]
+
+
+== Api customization
+
+We can use open API annotations, like ```@Operation```, ```@ApiResponses```, ```@RequestBody```, etc. to describe and provide examples for our API's
+
+Some of the spring's libraries work out of the box with open API spec, i.e.:
+
+spring data jpa:: ```Pageable```
+spring validations:: ```@Size(min/max) @NotBlank```
+
+
+=== Controller Advice
+
+Global exceptions handlers (classes marked with ```@ControllerAdvice```) methods marked with ```@ResponseStatus``` are also automatically picked as valid api responses.
+
+Good use case is to translate validation errors to something your api spec demands.
+
+== Links
+
+link:https://springdoc.org/[springDoc documentation]
+
+link:https://swagger.io/resources/open-api/[swagger.io]
+
+link:https://datatracker.ietf.org/doc/html/rfc7807[ProblemDetail RFC 7807 standard]
+
+link:https://mailgun-docs.redoc.ly/docs/mailgun/api-reference/openapi-final/tag/Messages/[MailGun API reference]

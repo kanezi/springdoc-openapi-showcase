@@ -31,7 +31,7 @@
 		<springdoc.version>2.7.0</springdoc.version>
 	</properties>
 	<dependencies>
-		<!-- springdoc ui -->
+		<!-- tag::springdoc-openapi-dependency[] -->
 		<dependency>
 			<groupId>org.springdoc</groupId>
 			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
@@ -39,6 +39,7 @@
 			<!--<artifactId>springdoc-openapi-starter-webmvc-api</artifactId>-->
 			<version>${springdoc.version}</version>
 		</dependency>
+		<!-- end::springdoc-openapi-dependency[] -->
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -98,6 +99,7 @@
 						</exclude>
 					</excludes>
 				</configuration>
+				<!-- tag::maven-openapi-plugin[] -->
 				<executions>
 					<execution>
 						<goals>
@@ -120,6 +122,7 @@
 					</execution>
 				</executions>
 			</plugin>
+			<!-- end::maven-openapi-plugin[] -->
 		</plugins>
 	</build>
 

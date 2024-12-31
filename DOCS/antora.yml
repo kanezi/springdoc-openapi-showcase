@@ -1,0 +1,8 @@
+name: spring-tuts
+version: ~
+# module will be used in aggregate spring tutorials documentation
+# so, becase antora does not allow duplicate entries, title, start_page and nav can not be included
+#title: Spring and Spring Boot tutorials
+#start_page: springdoc-openapi:index.adoc
+#nav:
+#- modules/springdoc-openapi/nav.adoc

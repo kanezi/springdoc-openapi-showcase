@@ -1,0 +1,224 @@
+= Documenting RESTful APIs in Spring with Open API spec
+
+== Intro
+
+link:https://www.openapis.org/[Open API] (previously **link:https://swagger.io[Swagger]**) is world's most widely used API description standard and it provides a formal specification for describing HTTP APIs.
+
+This allows people to understand how and API works and how a sequence of API's work together.
+
+Specification is machine-readable so we can generate client code, create tests and much, much more...
+
+Open API specification is widely used so enjoys support of wide range of vendors and tools.
+
+
+=== History
+
+link:https://swagger.io[Swagger] came up with proposal for specification for describing RESTful APIs.
+
+The specification creates a RESTful interface for easily developing and consuming an API by effectively mapping all the resources and operations associated with it.
+
+Swagger spec became adopted by the industry and became industry standard know as OPEN API specification.
+
+Spec had a couple of guidelines it was created by:
+
+* Spec should be written in JSON or YAML format.
+* It would be used to describe RESTful APIs
+* The goal is to keep the spec machine-readable
+* But also make it easy for humans to understand as well
+
+
+Swagger also created Swagger-ui - popular web user interface for displaying and interacting with endpoints.
+
+image::image$swagger-io.png[]
+
+
+Key moments in history of the spec:
+
+* 2010 - Swagger
+* 2014 - Open API 2.0
+* 2017 - Open API 3.0
+* 2019 - springdoc-openapi
+* 2021 - Open API 3.1
+
+
+
+== Spring doc - Open API
+
+link:https://springdoc.org/[springdoc-openapi] is library that allows automatic generation of open API documentation for your link:https://spring.io/[Spring] projects.
+
+It provides swagger user interface with a list of your endpoints and the ability to generate open API json spec.
+
+
+Library is available as a dependency depending on whether you are using webMvc or webflux frameworks, and secondly if you need only open API spec generation, or swagger UI as well.
+
+image::image$springdoc-openapi.png[]
+
+
+In our project case, where we use webMvc framework, we want the ability to generate both generate api spec and display swagger user interface, so we've included webmvc-ui starter.
+
+[source,xml]
+----
+<properties>
+    <springdoc.version>2.7.0</springdoc.version>
+</properties>
+----
+
+[source,xml,indent=0]
+----
+include::example$pom.xml[tag=springdoc-openapi-dependency]
+----
+
+
+=== Out of the box integration
+
+Out of the box Spring Doc - Open API library is integrated with the rest of the Spring ecosystem and with just inclusion of library as dependency on our project we'll get out of the box rich functionality.
+
+To demonstrate library features we've created a project that has following starters:
+
+webMvc:: web application support, including REST, using Spring MVC
+actuator::  built in (or custom) endpoints that let you monitor and manage your application - such as application health, metrics, sessions, etc.
+Spring Data JPA:: persistence support with Java Persistence API
+validations:: bean validation support
+
+
+
+==== Spring @RestControllers
+
+We'll get our api definition by just using normal Spring webMvc annotations and marking our package to be scanned by springdoc-openapi library.
+
+For example class definition:
+
+[source,java,indent=0]
+----
+include::example$src/main/java/com/kanezi/springdoc_openapi_showcase/EmailApiController.java[tag=spring-rest-controller]
+----
+
+will be reflected in swagger ui:
+
+image::image$spring-rest-controller-openapi.png[]
+
+==== Spring @RestControllerAdvice
+
+Possible non success http responses are displayed automatically by using Springs ```@RestControllerAdvice``` and annotating our exception handler methods with appropriate response statuses.
+
+For example, exception handlers for __BAD_REQUEST__ (400) and __INTERNAL_SERVER_ERROR__ (500):
+
+[source,java,indent=0]
+----
+include::example$src/main/java/com/kanezi/springdoc_openapi_showcase/EmailApiExceptionTranslator.java[tag=rest-controller-advice-openapi]
+----
+
+are picked up as possible responses in swagger ui api definition:
+
+image::image$spring-controller-advice-status-swagger.png[]
+
+==== Actuator REST API
+
+Actuator provides built in (or custom) endpoints that let you monitor and manage your application - such as application health, metrics, sessions, etc.
+
+It comes with list of endpoints that are by default available under
+
+__/actuator__ root directory.
+
+By changing properties in our **application.properties** configuration, we'll allow actuator endpoints to be displayed in our app open API spec. We'll show all endpoints actuator has to offer, and change default root actuator url from __/actuator__ to __/management__.
+
+
+----
+include::example$src/main/resources/application.properties[tag=actuator_properties]
+----
+
+In our spring app, open api spec is, by default, available on: ```/v3/api-docs```, and swagger ui on: ```/swagger-ui/index.html```
+
+image::image$swagger_actuator_group.PNG[]
+
+
+==== Spring Data JPA
+
+Some of the Spring Data JPA framework build in objects, like ```Page``` and ```Pageable``` are automatically available in schema definition.
+
+For method definition:
+
+[source,java,indent=0]
+----
+include::example$src/main/java/com/kanezi/springdoc_openapi_showcase/EmailApi.java[tag=spring-data-jpa-openapi-supported]
+----
+
+we'd get automatic example and schema description in swagger ui:
+
+image::image$spring-data-jpa-schema.png[]
+
+==== Validations
+
+By including validation starter and validation annotation like ```@Size```:
+
+[source,java,indent=0]
+----
+include::example$src/main/java/com/kanezi/springdoc_openapi_showcase/EmailApi.java[tag=validation-openapi]
+----
+
+restrictions are reflected in swagger ui schema fields definition:
+
+image::image$validation-annotations.png[]
+
+
+==== Open API spec plugin
+
+If we'd like open API spec (**openapi.json**) to be available as part of our build process, we can include maven plugin that will generate it during verify phase on the root of our target directory.
+
+[source,xml,indent=0]
+----
+include::example$pom.xml[tag=maven-openapi-plugin]
+----
+
+
+==== Groups
+
+Groups lets us aggregate API under common name by specifying endpoint paths to match or packages to scan.
+
+In this example we group actuator endpoints under one, and our own endpoints under another group:
+
+[source,java,indent=0]
+----
+include::example$src/main/java/com/kanezi/springdoc_openapi_showcase/OpenApiConfig.java[tag=openapi-groups]
+----
+
+We noted our app root package ```com.kanezi.springdoc_openapi_showcase``` to be used in __packagesToScan__ method which means that our app every controller rest api definition will be under __email__ group.
+
+Groups definitions are reflected in swagger ui group definition selection.
+
+image::image$swagger_ui_group_selection.png[]
+
+
+=== Customization
+
+To customize default behaviour of springdoc-openapi library and configure how our endpoints are displayed we can change application properties or configure behaviour programmatically.
+
+
+If our application only has REST API on i.e. ```/api/v1/...``` and does not have default web ui, we can display swagger by default on root url by setting property:
+
+[indent=0]
+----
+include::example$src/main/resources/application.properties[tag=swagger-root-path]
+----
+
+==== REST API definition customization
+
+By annotating our class and method definitions with springdoc-openapi annotations, i.e.
+
+* ```@Operation```
+* ```@ApiResponse```
+* ```@RequestBody```
+* ...
+
+we can further customize how is our api definition described in open Api and swagger UI.
+
+Especially useful is ```@RequestBody``` content part where we can use ```@ExampleObject``` to provide valid json example for our users to immediately test our api.
+
+Example of method customization:
+
+[source,java,indent=0]
+----
+include::example$src/main/java/com/kanezi/springdoc_openapi_showcase/EmailApi.java[tag=springdoc-openapi-method-annotations]
+----
+
+image::image$swagger-ui-ExampleObject-example.png[]

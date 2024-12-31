@@ -35,6 +35,7 @@ public class EmailApiExceptionTranslator {
      * @param request web request interceptor
      * @return http status 400 with errorText body containing request body validation problems
      */
+    // tag::rest-controller-advice-openapi[]
     @ExceptionHandler(exception = BindException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     ResponseEntity<EmailApi.EmailError> processValidationException(WebRequest request) {
@@ -58,4 +59,5 @@ public class EmailApiExceptionTranslator {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new EmailApi.EmailError(e.getLocalizedMessage()));
     }
+    // end::rest-controller-advice-openapi[]
 }

@@ -20,12 +20,15 @@ import org.springframework.http.ResponseEntity;
 @Tag(name = "email", description = "email API")
 public interface EmailApi {
 
+    // tag::validation-openapi[]
     record EmailRequest(@Email @NotBlank String to, @Size(min = 3, max = 100) String subject,@NotBlank String text) {}
+    // end::validation-openapi[]
 
     record EmailResponse(String id, String message) {}
 
     record EmailError(String errorText) {}
 
+    // tag::springdoc-openapi-method-annotations[]
     @Operation(summary = "sends email", tags = {"email"}
             , description = """
             sends email <strong>to</strong> and email address
@@ -55,11 +58,14 @@ public interface EmailApi {
                             }
                             """)))
             EmailRequest emailRequest);
+    // end::springdoc-openapi-method-annotations[]
 
     @Operation(summary = "checks email id status")
     ResponseEntity<String> checkStatus(
             @Parameter(description = "id of the email message we want to check the status for", required = true)
             String id);
 
+    // tag::spring-data-jpa-openapi-supported[]
     Page<Object> filterEmails(@ParameterObject Pageable pageable);
+    // end::spring-data-jpa-openapi-supported[]
 }

@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+// tag::spring-rest-controller[]
 @RestController
 @RequestMapping("/api/v1/email")
 public class EmailApiController implements EmailApi {
@@ -27,3 +28,4 @@ public class EmailApiController implements EmailApi {
         throw new RuntimeException("TODO");
     }
 }
+// end::spring-rest-controller[]

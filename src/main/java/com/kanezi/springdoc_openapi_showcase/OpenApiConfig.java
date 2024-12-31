@@ -16,6 +16,7 @@ import static org.springdoc.core.utils.Constants.ALL_PATTERN;
 @NoArgsConstructor
 public class OpenApiConfig {
 
+    // tag::openapi-groups[]
     @Value("${springdoc.version}")
     String springDocVersion;
 
@@ -38,5 +39,6 @@ public class OpenApiConfig {
                 .packagesToScan("com.kanezi.springdoc_openapi_showcase")
                 .build();
     }
+    // end::openapi-groups[]
 
 }

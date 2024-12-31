@@ -80,7 +80,31 @@ actuator::  built in (or custom) endpoints that let you monitor and manage your 
 Spring Data JPA:: persistence support with Java Persistence API
 validations:: bean validation support
 
+We can tell springdoc-openapi library to scan packages or include paths from our application in open API spec in two ways.
 
+Either by specifying properties in our ```application.properties```:
+
+----
+# Packages to scan
+springdoc.packagesToScan=com.package1, com.package2
+----
+----
+# Paths to include
+springdoc.pathsToMatch=/v1, /api/balance/**
+----
+
+or programmatically by defining ```GroupedOpenApi``` bean.
+
+[source,java]
+----
+@Bean
+public GroupedOpenApi publicApi() {
+  return GroupedOpenApi.builder()
+          .group("springshop-public")
+          .pathsToMatch("/public/**")
+          .build();
+}
+----
 
 ==== Spring @RestControllers
 
